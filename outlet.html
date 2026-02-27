@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mendeteksi Lokasi - Web App Mie Gacoan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { brand: '#dc2626', accent: '#facc15' } } } }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans h-screen flex flex-col">
+    <header class="bg-brand text-white p-4 shadow-md text-center">
+        <h1 class="text-xl font-bold italic tracking-wider">MIE NGEGAS🔥</h1>
+    </header>
+
+    <main class="max-w-md mx-auto p-4 flex-1 flex flex-col justify-center items-center w-full">
+        
+        <div id="loading-screen" class="text-center w-full">
+            <div class="w-16 h-16 border-4 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <h2 class="text-lg font-bold text-gray-800">Mendeteksi Lokasi Anda...</h2>
+            <p class="text-sm text-gray-500 mt-2 px-6">Kami sedang mencari cabang Mie Ngegas terdekat dari titik Anda berada saat ini.</p>
+        </div>
+
+        <div id="manual-screen" class="hidden w-full">
+            <div class="bg-red-100 text-red-700 p-3 rounded-xl text-sm mb-4 text-center">
+                ⚠️ Gagal mendapatkan lokasi GPS. Silakan pilih cabang secara manual.
+            </div>
+            <h2 class="text-lg font-bold text-gray-800 mb-2">Pilih Outlet Manual</h2>
+            <div class="space-y-3" id="daftar-outlet-manual">
+                </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Simulasi Database Cabang beserta titik koordinatnya (Latitude & Longitude)
+        // Saya memasukkan beberapa titik, termasuk area Tangerang dan Jakarta
+        const daftarCabang = [
+            { id: "Tangerang BSD", lat: -6.295484, lng: 106.638423, alamat: "Jl. Pahlawan Seribu, Lengkong Gudang" },
+            { id: "Jakarta Selatan (Tebet)", lat: -6.229728, lng: 106.852445, alamat: "Jl. Tebet Raya No. 45" },
+            { id: "Jakarta Barat (Tj. Duren)", lat: -6.175403, lng: 106.784405, alamat: "Jl. Tanjung Duren Raya" }
+        ];
+
+        // Rumus Haversine untuk menghitung jarak antara 2 titik koordinat (dalam Kilometer)
+        function hitungJarakBumi(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius bumi dalam km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c; // Hasil dalam Kilometer
+        }
+
+        // Fungsi menyimpan data dan pindah halaman
+        function tetapkanCabang(namaCabang, jarakKm) {
+            localStorage.setItem('ngegas_outlet', namaCabang);
+            localStorage.setItem('ngegas_cart', JSON.stringify([])); // Kosongkan keranjang lama
+            
+            if(jarakKm !== null) {
+                alert(`Cabang terdekat ditemukan: ${namaCabang} (Jarak: ${jarakKm.toFixed(1)} km).\nMengarahkan ke halaman menu...`);
+            }
+            window.location.href = 'index.html';
+        }
+
+        // Fungsi menampilkan pilihan manual jika GPS gagal
+        function tampilkanPilihanManual() {
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('manual-screen').classList.remove('hidden');
+            
+            const wadah = document.getElementById('daftar-outlet-manual');
+            daftarCabang.forEach(cabang => {
+                wadah.innerHTML += `
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                    <h3 class="font-bold text-gray-800">Mie Ngegas - ${cabang.id}</h3>
+                    <p class="text-xs text-gray-500 mt-1">${cabang.alamat}</p>
+                    <button onclick="tetapkanCabang('${cabang.id}', null)" class="mt-3 w-full bg-brand text-white font-bold py-2 rounded-lg hover:bg-red-700 transition">Pilih</button>
+                </div>`;
+            });
+        }
+
+        // --- LOGIKA PENDETEKSI LOKASI OTOMATIS ---
+        function deteksiLokasi() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    // Jika BERHASIL mendapat lokasi GPS pengguna
+                    function(posisi) {
+                        const userLat = posisi.coords.latitude;
+                        const userLng = posisi.coords.longitude;
+                        
+                        let cabangTerdekat = null;
+                        let jarakTerdekat = Infinity;
+
+                        // Cek satu per satu jarak user ke semua cabang di database
+                        daftarCabang.forEach(cabang => {
+                            let jarak = hitungJarakBumi(userLat, userLng, cabang.lat, cabang.lng);
+                            if (jarak < jarakTerdekat) {
+                                jarakTerdekat = jarak;
+                                cabangTerdekat = cabang;
+                            }
+                        });
+
+                        // Beri sedikit delay (1.5 detik) agar UI loading terlihat natural, lalu alihkan
+                        setTimeout(() => {
+                            tetapkanCabang(cabangTerdekat.id, jarakTerdekat);
+                        }, 1500);
+                    },
+                    // Jika GAGAL (User menolak akses GPS atau error browser)
+                    function(error) {
+                        console.warn(`Error GPS: ${error.message}`);
+                        tampilkanPilihanManual();
+                    },
+                    // Opsi Akurasi
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                );
+            } else {
+                // Jika browser jadul dan tidak dukung GPS
+                tampilkanPilihanManual();
+            }
+        }
+
+        // Jalankan pendeteksi lokasi otomatis saat halaman dimuat
+        window.onload = deteksiLokasi;
+    </script>
+</body>
+</html>
