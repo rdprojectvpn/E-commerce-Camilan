@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu - SpicyBites</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { primary: '#ea580c', dark: '#1e293b', light: '#f8fafc', flash: '#e11d48' } } } }
+    </script>
+</head>
+<body class="bg-light font-sans pb-24">
+
+    <header class="bg-white p-5 sticky top-0 z-30 shadow-sm border-b border-gray-100">
+        <div class="max-w-md mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-black text-dark tracking-tight">SpicyBites.</h1>
+                <p class="text-xs text-gray-500 mt-0.5">Pesan Antar / Makan di Tempat</p>
+            </div>
+            <a href="cart.html" class="relative bg-gray-50 p-3 rounded-full hover:bg-gray-100 transition flex items-center justify-center w-10 h-10 shadow-sm">
+                <span>🛒</span>
+                <span id="cart-count" class="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold px-1.5 py-0.5 rounded-full shadow-md">0</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto mt-4">
+        
+        <div class="px-4 mb-6">
+            <div class="bg-dark rounded-3xl overflow-hidden relative shadow-lg">
+                <div class="p-6 relative z-10 w-2/3">
+                    <span class="bg-primary text-white text-[10px] font-black uppercase px-2 py-1 rounded mb-2 inline-block tracking-wider">Promo Baru</span>
+                    <h2 class="text-white font-black text-xl leading-tight mb-1">Makan Puas,<br>Dompet Aman!</h2>
+                    <p class="text-gray-300 text-xs mb-4">Diskon 20% untuk semua varian Dimsum hari ini.</p>
+                    <button class="bg-white text-dark text-xs font-bold py-2 px-4 rounded-full shadow-md hover:bg-gray-100 transition transform active:scale-95">Cek Sekarang</button>
+                </div>
+                <div class="absolute -right-4 -bottom-4 text-8xl opacity-90 transform -rotate-12 drop-shadow-2xl">🥟</div>
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10"></div>
+            </div>
+        </div>
+        
+        <div id="flash-sale-wrapper" class="px-4 mb-6 hidden transition-all duration-500">
+            <div class="bg-gradient-to-r from-flash to-orange-500 rounded-2xl p-4 text-white shadow-lg relative overflow-hidden">
+                <div class="absolute -right-10 top-0 text-7xl opacity-20 transform rotate-45">⚡</div>
+                <div class="flex justify-between items-center mb-3 relative z-10">
+                    <h2 class="font-bold text-lg flex items-center gap-1">⚡ Flash Sale</h2>
+                    <div class="bg-white/20 px-2 py-1 rounded text-sm font-bold tracking-widest backdrop-blur-sm" id="flash-timer">--:--:--</div>
+                </div>
+                <div id="flash-sale-container" class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide relative z-10"></div>
+            </div>
+        </div>
+
+        <div class="px-4 mb-6 flex overflow-x-auto gap-3 pb-2 scrollbar-hide">
+            <button onclick="renderMenu('semua')" class="kategori-btn bg-dark text-white px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap shadow-md transform scale-105 transition-all duration-300">Semua</button>
+            <button onclick="renderMenu('mie')" class="kategori-btn bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300">🍜 Mie</button>
+            <button onclick="renderMenu('nasi')" class="kategori-btn bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300">🍚 Nasi</button>
+            <button onclick="renderMenu('dimsum')" class="kategori-btn bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300">🥟 Dimsum</button>
+            <button onclick="renderMenu('cemilan')" class="kategori-btn bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300">🍟 Cemilan</button>
+            <button onclick="renderMenu('minuman')" class="kategori-btn bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300">🍹 Minuman</button>
+            <button onclick="renderMenu('dessert')" class="kategori-btn bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300">🍦 Dessert</button>
+        </div>
+
+        <h2 class="px-4 font-bold text-dark mb-4 text-lg">Menu Pilihan</h2>
+        <div id="product-container" class="grid grid-cols-2 gap-4 px-4"></div>
+
+    </main>
+
+    <div id="modal-opsi" class="fixed inset-0 bg-dark bg-opacity-70 hidden items-end justify-center z-50 backdrop-blur-sm transition-all">
+        <div class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transform transition-transform duration-300">
+            <div class="flex justify-between items-center mb-5">
+                <h3 id="modal-nama-menu" class="text-xl font-black text-dark">Nama Menu</h3>
+                <button onclick="tutupModalOpsi()" class="text-gray-400 font-bold text-2xl hover:text-red-500">&times;</button>
+            </div>
+            <p id="modal-deskripsi-opsi" class="text-sm text-gray-500 mb-4 font-semibold">Pilih opsi:</p>
+            
+            <div id="opsi-container" class="grid gap-3 mb-6"></div>
+            
+            <button onclick="tambahKeKeranjang()" class="w-full bg-primary text-white font-bold py-3.5 rounded-xl hover:bg-orange-700 shadow-md transition active:scale-95">Tambahkan ke Pesanan</button>
+        </div>
+    </div>
+
+    <div id="toast-cart" class="fixed top-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm px-6 py-3 rounded-full shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center gap-2">
+        <span class="text-green-400 text-lg">✔</span> Berhasil ditambahkan!
+    </div>
+
+    <script>
+        // === BACA DATA DARI DATABASE ===
+        let dataFlashSale = JSON.parse(localStorage.getItem('ngegas_flashsale')) || [];
+        let databaseProduk = JSON.parse(localStorage.getItem('ngegas_produk')) || [];
+
+        // === 1. LOGIKA FLASH SALE ===
+        function renderFlashSale() {
+            const wrapper = document.getElementById('flash-sale-wrapper');
+            const container = document.getElementById('flash-sale-container');
+            container.innerHTML = '';
+            
+            if(dataFlashSale.length === 0) { wrapper.classList.add('hidden'); return; } 
+            else { wrapper.classList.remove('hidden'); }
+
+            dataFlashSale.forEach(item => {
+                const menuAsli = databaseProduk.find(m => m.nama === item.nama) || {};
+                const opsiMenu = menuAsli.opsi || 'original'; 
+
+                const card = `
+                <div class="bg-white text-dark rounded-xl p-2 min-w-[140px] shadow-sm flex-shrink-0 group">
+                    <div class="h-20 bg-red-50 rounded-lg flex items-center justify-center text-4xl mb-2 group-hover:scale-105 transition-transform duration-300">${item.ikon}</div>
+                    <h3 class="font-bold text-xs truncate">${item.nama}</h3>
+                    <div class="flex items-end gap-1 mt-1">
+                        <p class="text-flash font-black text-sm">Rp ${item.hargaPromo.toLocaleString('id-ID')}</p>
+                        <p class="text-[10px] text-gray-400 line-through">${item.hargaCoret.toLocaleString('id-ID')}</p>
+                    </div>
+                    <button onclick="bukaModal('${item.nama} (Promo)', ${item.hargaPromo}, '${item.ikon}', '${opsiMenu}')" class="w-full bg-flash text-white text-[11px] font-bold py-1.5 rounded mt-2 hover:bg-red-700 transition active:scale-95">Sikat!</button>
+                </div>`;
+                container.innerHTML += card;
+            });
+        }
+
+        // === 2. LOGIKA MENU UTAMA ===
+        const productContainer = document.getElementById('product-container');
+        function renderMenu(filterKategori) {
+            productContainer.innerHTML = ''; 
+            
+            document.querySelectorAll('.kategori-btn').forEach(btn => { 
+                btn.className = 'kategori-btn bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300'; 
+            });
+            event.currentTarget.className = 'kategori-btn bg-dark text-white px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap shadow-md transition-all duration-300 transform scale-105';
+            
+            const produkDitampilkan = filterKategori === 'semua' ? databaseProduk : databaseProduk.filter(item => item.kategori === filterKategori);
+
+            if(produkDitampilkan.length === 0) {
+                productContainer.innerHTML = `<div class="col-span-2 text-center py-12"><span class="text-5xl mb-3 block opacity-50">🍽️</span><p class="text-gray-400 text-sm font-medium">Belum ada menu di kategori ini.</p></div>`;
+            }
+
+            produkDitampilkan.forEach(item => {
+                let opsiMenu = item.opsi || 'original'; 
+                
+                productContainer.innerHTML += `
+                <div class="bg-white rounded-3xl p-3 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 flex flex-col justify-between group relative overflow-hidden">
+                    <div class="absolute top-0 left-0 bg-orange-100 text-primary text-[9px] font-black px-3 py-1.5 rounded-br-xl rounded-tl-3xl z-10 uppercase tracking-widest">${item.kategori}</div>
+                    <div class="relative mt-2">
+                        <div class="h-32 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl flex items-center justify-center text-6xl mb-3 group-hover:scale-105 transition-transform duration-300">${item.ikon}</div>
+                        <button onclick="bukaModal('${item.nama}', ${item.harga}, '${item.ikon}', '${opsiMenu}')" class="absolute -bottom-3 right-2 bg-dark text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-primary shadow-lg hover:shadow-primary/40 transition-all text-xl font-bold active:scale-90">+</button>
+                    </div>
+                    <div class="pt-2 px-1">
+                        <h3 class="font-black text-dark text-sm leading-tight mb-1 line-clamp-1">${item.nama}</h3>
+                        <p class="text-[10px] text-gray-400 line-clamp-2 leading-relaxed h-7">${item.deskripsi}</p>
+                        <div class="mt-3 flex items-center justify-between">
+                            <p class="text-primary font-black text-base">Rp ${item.harga.toLocaleString('id-ID')}</p>
+                        </div>
+                    </div>
+                </div>`;
+            });
+        }
+
+        // === 3. LOGIKA TIMER FLASH SALE ===
+        function mulaiTimer() {
+            let waktuTersimpan = localStorage.getItem('ngegas_flash_endtime');
+            if (!waktuTersimpan) { document.getElementById("flash-timer").innerHTML = "BELUM DIATUR"; return; }
+
+            let waktuBerakhir = new Date(waktuTersimpan).getTime(); 
+            let x = setInterval(function() {
+                let sekarang = new Date().getTime();
+                let selisih = waktuBerakhir - sekarang;
+
+                if (selisih < 0) {
+                    clearInterval(x);
+                    document.getElementById('flash-sale-wrapper').classList.add('hidden'); 
+                    return;
+                }
+
+                let hari = Math.floor(selisih / (1000 * 60 * 60 * 24));
+                let jam = Math.floor((selisih % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                let menit = Math.floor((selisih % (1000 * 60 * 60)) / (1000 * 60));
+                let detik = Math.floor((selisih % (1000 * 60)) / 1000);
+                
+                jam = jam < 10 ? "0" + jam : jam; menit = menit < 10 ? "0" + menit : menit; detik = detik < 10 ? "0" + detik : detik;
+                let teksTampil = `${jam}:${menit}:${detik}`;
+                if (hari > 0) teksTampil = `${hari}H, ` + teksTampil;
+
+                document.getElementById("flash-timer").innerHTML = teksTampil;
+            }, 1000);
+        }
+
+        // === 4. LOGIKA KERANJANG DINAMIS (UPDATE BARU) ===
+        let menuTerpilih = {};
+        let keranjang = JSON.parse(localStorage.getItem('ngegas_cart')) || [];
+
+        function updateBadge() { document.getElementById('cart-count').innerText = keranjang.reduce((sum, item) => sum + item.qty, 0); }
+        updateBadge();
+
+        function bukaModal(nama, harga, ikon, tipeOpsi) {
+            menuTerpilih = { nama, harga, ikon, opsiDipilih: null, level: null, qty: 1 };
+            
+            // JIKA MENU DIATUR SEBAGAI "ORIGINAL"
+            if(tipeOpsi === 'original') {
+                menuTerpilih.opsiDipilih = "Original"; 
+                menuTerpilih.level = "Original"; // Disamakan agar tidak error di cart.html lama
+                prosesTambahKeKeranjang();
+                munculkanToast();
+                return;
+            }
+
+            // JIKA PUNYA OPSI, KITA RENDER TOMBOLNYA SESUAI TIPE
+            document.getElementById('modal-nama-menu').innerText = nama;
+            const container = document.getElementById('opsi-container');
+            const teksDeskripsi = document.getElementById('modal-deskripsi-opsi');
+            container.innerHTML = ''; // Bersihkan tombol sebelumnya
+
+            let daftarPilihan = [];
+
+            // Tentukan pilihan berdasarkan tipe
+            if(tipeOpsi === 'level') {
+                teksDeskripsi.innerText = "Tentukan tingkat kepedasan Anda:";
+                container.className = "grid grid-cols-4 gap-3 mb-6"; // Grid 4 kotak
+                for(let i=0; i<=8; i++) daftarPilihan.push(`Level ${i}`);
+            } 
+            else if(tipeOpsi === 'suhu') {
+                teksDeskripsi.innerText = "Pilih suhu minuman:";
+                container.className = "grid grid-cols-2 gap-3 mb-6"; // Grid 2 kotak besar
+                daftarPilihan.push('Dingin 🧊', 'Panas ☕');
+            } 
+            else if(tipeOpsi === 'ukuran') {
+                teksDeskripsi.innerText = "Pilih porsi / ukuran:";
+                container.className = "grid grid-cols-2 gap-3 mb-6"; // Grid 2 kotak besar
+                daftarPilihan.push('Reguler', 'Jumbo');
+            }
+
+            // Gambar tombol-tombolnya ke layar
+            daftarPilihan.forEach(pilihan => {
+                let btn = document.createElement('button');
+                btn.className = `opsi-btn border border-gray-200 text-gray-600 rounded-xl py-3 text-sm font-bold transition-all`;
+                btn.innerText = pilihan;
+                btn.onclick = () => {
+                    menuTerpilih.opsiDipilih = pilihan;
+                    menuTerpilih.level = pilihan; // Backward compatibility dengan cart.html
+                    
+                    // Ganti warna saat ditekan
+                    document.querySelectorAll('.opsi-btn').forEach(b => {
+                        b.classList.replace('bg-primary', 'border-gray-200'); b.classList.replace('text-white', 'text-gray-600');
+                    });
+                    btn.classList.replace('border-gray-200', 'bg-primary'); btn.classList.replace('text-gray-600', 'text-white');
+                };
+                container.appendChild(btn);
+            });
+
+            // Tampilkan Modal
+            document.getElementById('modal-opsi').classList.remove('hidden');
+            document.getElementById('modal-opsi').classList.add('flex');
+        }
+
+        function tutupModalOpsi() { document.getElementById('modal-opsi').classList.add('hidden'); document.getElementById('modal-opsi').classList.remove('flex'); }
+
+        function tambahKeKeranjang() {
+            if(menuTerpilih.opsiDipilih === null) { alert("Pilih opsi yang tersedia terlebih dahulu!"); return; }
+            prosesTambahKeKeranjang();
+            tutupModalOpsi();
+            munculkanToast();
+        }
+
+        function prosesTambahKeKeranjang() {
+            let index = keranjang.findIndex(i => i.nama === menuTerpilih.nama && i.opsiDipilih === menuTerpilih.opsiDipilih);
+            if(index !== -1) keranjang[index].qty += 1; else keranjang.push(menuTerpilih);
+            localStorage.setItem('ngegas_cart', JSON.stringify(keranjang)); 
+            updateBadge(); 
+        }
+
+        function munculkanToast() {
+            const toast = document.getElementById('toast-cart');
+            toast.classList.remove('opacity-0');
+            setTimeout(() => { toast.classList.add('opacity-0'); }, 1500);
+        }
+
+        window.onload = () => { renderFlashSale(); renderMenu('semua'); mulaiTimer(); };
+    </script>
+</body>
+</html>

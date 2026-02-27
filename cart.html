@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keranjang - SpicyBites</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { primary: '#ea580c', dark: '#1e293b', light: '#f8fafc' } } } }
+    </script>
+</head>
+<body class="bg-light font-sans pb-32">
+
+    <header class="bg-white text-dark p-4 sticky top-0 z-10 shadow-sm border-b border-gray-100 flex items-center gap-3">
+        <a href="index.html" class="text-2xl font-bold hover:text-primary transition">&larr;</a>
+        <h1 class="text-xl font-bold">Keranjang Pesanan</h1>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 mt-6">
+        
+        <div id="cart-items-container" class="space-y-4"></div>
+
+        <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-200 mt-8 mb-4">
+            <h3 class="font-bold text-dark mb-4 border-b border-gray-100 pb-3">Rincian Pembayaran</h3>
+            <div class="flex justify-between text-sm text-gray-500 mb-2"><span>Subtotal</span><span id="subtotal" class="font-medium text-dark">Rp 0</span></div>
+            <div class="flex justify-between text-sm text-gray-500 mb-2"><span>Pajak (10%)</span><span id="pajak" class="font-medium text-dark">Rp 0</span></div>
+            <div class="flex justify-between font-black text-dark text-lg mt-4 pt-4 border-t border-gray-100">
+                <span>Total</span><span id="total-akhir" class="text-primary">Rp 0</span>
+            </div>
+        </div>
+    </main>
+
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+        <div class="max-w-md mx-auto flex items-center justify-between gap-4">
+            <div class="flex flex-col">
+                <span class="text-xs text-gray-500 font-medium">Total Pembayaran</span>
+                <span id="total-floating" class="font-black text-primary text-xl">Rp 0</span>
+            </div>
+            <button onclick="prosesCheckout()" class="bg-primary text-white font-bold py-3.5 px-8 rounded-full shadow-lg hover:bg-orange-700 transition transform active:scale-95 flex-1 text-center">
+                Pesan & Bayar
+            </button>
+        </div>
+    </div>
+
+    <div id="modal-success" class="fixed inset-0 bg-dark bg-opacity-80 hidden items-center justify-center z-50 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div class="bg-white max-w-sm w-full mx-5 rounded-3xl p-8 text-center shadow-2xl transform scale-50 transition-transform duration-500" id="success-card">
+            <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner relative overflow-hidden">
+                <span class="text-5xl relative z-10 animate-bounce">✅</span>
+            </div>
+            <h3 class="text-2xl font-black text-dark mb-2">Pesanan Berhasil!</h3>
+            <p class="text-gray-500 text-sm mb-6 leading-relaxed">Dapur kami sedang menyiapkan pesanan lezat Anda. Mohon tunggu sebentar.</p>
+            <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+        </div>
+    </div>
+
+    <script>
+        let keranjang = JSON.parse(localStorage.getItem('ngegas_cart')) || [];
+
+        function renderKeranjang() {
+            const wadah = document.getElementById('cart-items-container');
+            wadah.innerHTML = '';
+
+            if(keranjang.length === 0) {
+                wadah.innerHTML = `
+                <div class="text-center py-16 bg-white rounded-3xl border border-gray-200 border-dashed">
+                    <span class="text-6xl block mb-4 opacity-50">🛒</span>
+                    <p class="text-gray-500 text-sm font-medium">Keranjang Anda masih kosong.<br><a href="index.html" class="text-primary font-bold mt-2 inline-block hover:underline">Yuk pilih menu lezat sekarang!</a></p>
+                </div>`;
+                document.getElementById('subtotal').innerText = 'Rp 0';
+                document.getElementById('pajak').innerText = 'Rp 0';
+                document.getElementById('total-akhir').innerText = 'Rp 0';
+                document.getElementById('total-floating').innerText = 'Rp 0';
+                return;
+            }
+
+            keranjang.forEach((item, index) => {
+                // MENGATUR LABEL WARNA-WARNI BERDASARKAN OPSI YANG DIPILIH
+                let teksOpsi = "";
+                let opsiAsli = item.opsiDipilih || item.level; // Jaga-jaga membaca format data lama
+
+                if (opsiAsli === "-" || opsiAsli === "Original" || !opsiAsli) {
+                    teksOpsi = `<span class="bg-gray-100 text-gray-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">Original</span>`;
+                } else if (String(opsiAsli).includes("Level")) {
+                    teksOpsi = `<span class="bg-red-100 text-red-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">${opsiAsli}</span>`;
+                } else if (String(opsiAsli).includes("Dingin") || String(opsiAsli).includes("Panas")) {
+                    teksOpsi = `<span class="bg-cyan-100 text-cyan-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">${opsiAsli}</span>`;
+                } else if (String(opsiAsli).includes("Reguler") || String(opsiAsli).includes("Jumbo")) {
+                    teksOpsi = `<span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">${opsiAsli}</span>`;
+                } else {
+                    teksOpsi = `<span class="bg-orange-100 text-orange-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">${opsiAsli}</span>`;
+                }
+
+                let htmlCard = `
+                <div class="bg-white p-3 rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-50 flex gap-4 items-center transition-all hover:shadow-md">
+                    <div class="w-20 h-20 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl flex items-center justify-center text-4xl shrink-0">${item.ikon}</div>
+                    <div class="flex-1">
+                        <h3 class="font-black text-dark text-sm leading-tight">${item.nama}</h3>
+                        <div class="mt-1.5 mb-1">${teksOpsi}</div>
+                        <p class="text-primary font-bold text-sm">Rp ${item.harga.toLocaleString('id-ID')}</p>
+                    </div>
+                    <div class="flex flex-col items-center bg-gray-50 rounded-xl overflow-hidden shrink-0 border border-gray-100">
+                        <button onclick="ubahJumlah(${index}, 1)" class="w-8 h-8 text-primary hover:bg-gray-200 font-bold active:bg-gray-300 transition">+</button>
+                        <span class="w-8 h-6 text-center text-xs font-black text-dark flex items-center justify-center">${item.qty}</span>
+                        <button onclick="ubahJumlah(${index}, -1)" class="w-8 h-8 text-gray-500 hover:bg-gray-200 font-bold active:bg-gray-300 transition">-</button>
+                    </div>
+                </div>`;
+                wadah.innerHTML += htmlCard;
+            });
+
+            hitungTotalBiaya();
+        }
+
+        function ubahJumlah(index, nilai) {
+            keranjang[index].qty += nilai;
+            
+            if(keranjang[index].qty < 1) {
+                if(confirm("Hapus menu ini dari keranjang?")) {
+                    keranjang.splice(index, 1);
+                } else {
+                    keranjang[index].qty = 1; 
+                }
+            }
+            
+            localStorage.setItem('ngegas_cart', JSON.stringify(keranjang));
+            renderKeranjang();
+        }
+
+        function hitungTotalBiaya() {
+            let subtotal = keranjang.reduce((total, item) => total + (item.harga * item.qty), 0);
+            let pajak = subtotal * 0.10;
+            let totalAkhir = subtotal + pajak;
+
+            document.getElementById('subtotal').innerText = `Rp ${subtotal.toLocaleString('id-ID')}`;
+            document.getElementById('pajak').innerText = `Rp ${pajak.toLocaleString('id-ID')}`;
+            document.getElementById('total-akhir').innerText = `Rp ${totalAkhir.toLocaleString('id-ID')}`;
+            document.getElementById('total-floating').innerText = `Rp ${totalAkhir.toLocaleString('id-ID')}`;
+        }
+
+        function prosesCheckout() {
+            if(keranjang.length === 0) return alert("Keranjang kosong! Silakan pesan makanan terlebih dahulu.");
+            
+            const modal = document.getElementById('modal-success');
+            const card = document.getElementById('success-card');
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                card.classList.remove('scale-50');
+                card.classList.add('scale-100');
+            }, 50);
+            
+            localStorage.setItem('ngegas_cart', JSON.stringify([])); 
+
+            setTimeout(() => {
+                window.location.href = 'index.html'; 
+            }, 3000);
+        }
+
+        // Jalankan saat pertama kali dibuka
+        renderKeranjang();
+    </script>
+</body>
+</html>
